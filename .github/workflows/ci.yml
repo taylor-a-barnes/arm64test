@@ -37,8 +37,8 @@ jobs:
       run: |
         pip install mdimechanic
 
-    - name: Perform docker setup
-      uses: docker-practice/actions-setup-docker@master
+    #- name: Perform docker setup
+    #  uses: docker-practice/actions-setup-docker@master
 
     - name: Build this MDI Mechanic image
       run: |
