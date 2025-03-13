@@ -38,11 +38,9 @@ jobs:
         pip install mdimechanic
 
     - name: Perform docker setup
-      if: matrix.os == 'ubuntu-latest'
       uses: docker-practice/actions-setup-docker@master
 
     - name: Build this MDI Mechanic image
-      if: matrix.os == 'ubuntu-latest'
       run: |
         mdimechanic build
 
