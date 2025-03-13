@@ -35,7 +35,7 @@ jobs:
 
     - name: Install package
       run: |
-        python -m pip install .
+        pip install mdimechanic
 
     - name: Perform docker setup
       if: matrix.os == 'ubuntu-latest'
