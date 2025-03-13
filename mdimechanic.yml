@@ -1,0 +1,69 @@
+code_name: 'arm64test'
+docker:
+  image_name: 'mdi/arm64test'
+
+  build_image:
+    - apt-get update -y
+    - apt-get install -y --no-install-recommends cmake wget vim make g++ gcc git liblapack-dev libeigen3-dev
+    - apt-get clean
+    - apt-get purge
+    - rm -rf /tmp/* /var/tmp/* /var/lib/apt/lists/*
+
+    - pip install numpy
+    - pip install pymdi
+    - pip install pydantic
+    - pip install Pint
+    - pip install scipy
+    - pip install pytest
+
+    # Create a scratch directory for Psi4
+    - mkdir /psi4_scratch
+    - echo "export PSI_SCRATCH=/psi4_scratch" >> ~/.profile
+    - echo "export PSI_SCRATCH=/psi4_scratch" >> ~/.bashrc
+
+    # Add Psi4 path variables to .profile and .bashrc
+    - echo "export PYTHONPATH=\$PYTHONPATH:/repo/install/lib" >> ~/.profile
+    - echo "export PYTHONPATH=\$PYTHONPATH:/repo/install/lib" >> ~/.bashrc
+    - echo "export PATH=\$PATH:/repo/install/bin" >> ~/.profile
+    - echo "export PATH=\$PATH:/repo/install/bin" >> ~/.bashrc
+
+    # Obtain a clone of LAMMPS
+    - git clone https://github.com/lammps/lammps.git
+    - LAMMPS_INSTALL='mpi'
+
+    # Build LAMMPS
+    - cd lammps
+    - mkdir -p build
+    - cd build
+    - cmake -D PKG_RIGID=yes -D PKG_MOLECULE=yes -D PKG_KSPACE=yes -D PKG_MDI=yes -D BUILD_SHARED_LIBS=yes -D LAMMPS_MACHINE=mpi ../cmake
+    - make
+    - cp lmp_mpi lmp_mdi
+    - cp liblammps_mpi.so liblammps.so
+    - echo "export PATH=$PATH:lammps/build" >> ~/.profile
+    - echo "export PATH=$PATH:lammps/build" >> ~/.bashrc
+
+  build_engine:
+    - |
+      if [ ! -d "/repo/build/psi4" ]; then
+        git clone https://github.com/psi4/psi4.git /repo/build/psi4
+      fi
+    - cd /repo/build/psi4
+    - |
+      if [ ! -d "objdir" ]; then
+        cmake -DCMAKE_INSTALL_PREFIX=/repo/install -S. -Bobjdir
+      fi
+    - cd objdir
+    - make -j 1
+    - make install
+
+  validate_engine:
+    - python -m pip install . --no-deps
+
+
+engine_tests:
+  # Provide at least one example input that can be used to test your code's MDI functionality
+  script:
+    - python -m pip install . --no-deps
+
+
+
