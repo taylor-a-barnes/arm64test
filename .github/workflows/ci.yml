@@ -1,44 +1,48 @@
-# This is a basic workflow to help you get started with Actions
-
 name: CI
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
+# Controls when the action will run. Triggers the workflow on push or pull request events
 on:
   push:
-    branches: [ master ]
+    branches:
+      - '**'
   pull_request:
-    branches: [ master ]
+    branches:
+      - '**'
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-24.04-arm
+  test:
+    name: Test on ${{ matrix.os }}, Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-24.04-arm]
+        python-version: [3.12]
 
-    env:
-      MDIMECH_CI: true
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
-        with:
-          python-version: '3.12'
+    - uses: actions/checkout@v3
 
-      - name: Install MDI Mechanic
-        run: |
-          sudo apt-get update
-          pip install wheel
-          pip install pyyaml
-          mkdir mechbuild
-          cd mechbuild
-          git clone https://github.com/MolSSI-MDI/MDI_Mechanic.git
-          cd MDI_Mechanic
-          pip install .
-          cd ../..
+    - name: Additional info about the build
+      shell: bash
+      run: |
+        uname -a
+        df -h
+        ulimit -a
 
-      - name: Run CI Using MDI Mechanic
-        run: mdimechanic build
+    - name: Set up Python '${{ matrix.python-version }}'
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install package
+      run: |
+        python -m pip install .
+
+    - name: Perform docker setup
+      if: matrix.os == 'ubuntu-latest'
+      uses: docker-practice/actions-setup-docker@master
+
+    - name: Build this MDI Mechanic image
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        mdimechanic build
+
